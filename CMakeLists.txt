@@ -13,9 +13,11 @@ find_package(Pangolin REQUIRED)
 find_package(Eigen3  REQUIRED)
 find_package(Ceres REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(OpenCV REQUIRED)
 include_directories(
   ${CERES_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 include_directories("./")
@@ -51,4 +53,8 @@ add_executable(main
 )
 target_link_libraries(main imu_calibr yaml-cpp OrbbecSDK)
 
+add_executable(record 
+  record.cpp
+)
+target_link_libraries(record imu_calibr yaml-cpp OrbbecSDK ${OpenCV_LIBS})
 

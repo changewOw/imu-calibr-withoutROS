@@ -7,6 +7,38 @@
 #include <mutex>
 #include <atomic>
 
+class FPSCounter {
+using Clock = std::chrono::high_resolution_clock;
+using TimePoint = Clock::time_point;
+using Duration = Clock::duration;
+
+public:
+    FPSCounter() : frameCount(0), lastFpsUpdate(Clock::now()), startTime(lastFpsUpdate) {}
+
+    void newFrame() {
+        TimePoint currentTime = Clock::now();
+        ++frameCount;
+
+        Duration elapsedTime = currentTime - lastFpsUpdate;
+
+        if (elapsedTime >= Duration(std::chrono::seconds(1))) {
+            double seconds = std::chrono::duration<double>(elapsedTime).count();
+            fps = frameCount / seconds;
+
+            frameCount = 0;
+            lastFpsUpdate = currentTime;
+
+            std::cout << "FPS: " << fps << "\n";
+        }
+    }
+
+private:
+    int frameCount;
+    double fps;
+    TimePoint lastFpsUpdate;
+    TimePoint startTime;
+};
+
 std::mutex gyr_mtx, acc_mtx;
 
 std::atomic_bool gyr_flag(false);
@@ -18,9 +50,15 @@ std::shared_ptr<ob::AccelFrame> gAcc_data;
 
 int main()
 {
-    auto imu_calibr_wrappper = IMU_Calibr(100, 90);
+    auto imu_calibr_wrappper = IMU_Calibr(100, 120);
 
 
+
+    return 0;
+    
+
+    // FPSCounter fps_gyr = FPSCounter();
+    // FPSCounter fps_acc = FPSCounter();
 
     // Print the SDK version number, the SDK version number is divided into major version number, minor version number and revision number
     std::cout << "SDK version: " << ob::Version::getMajor() << "." << ob::Version::getMinor() << "." << ob::Version::getPatch() << std::endl;
@@ -52,14 +90,13 @@ int main()
             auto profiles = gyroSensor->getStreamProfileList();
             // Select the first profile to open stream
             auto profile = profiles->getProfile(OB_PROFILE_DEFAULT);
+            // auto profile = profiles->getGyroStreamProfile(OBGyroFullScaleRange::OB_GYRO_FS_1000dps, OBGyroSampleRate::OB_SAMPLE_RATE_500_HZ);
             std::cout<< "Gyr sample rate is "<< profile->as<ob::GyroStreamProfile>()->sampleRate()<<std::endl;
 
             gyroSensor->start(profile, [](std::shared_ptr<ob::Frame> frame) {
                 std::unique_lock<std::mutex> lk(gyr_mtx);
                 gGyr_data = frame->as<ob::GyroFrame>();
                 gyr_flag = true;
-                static long aa = 0;
-                std::cout<<aa++<<std::endl;
             });
         }
         {
@@ -142,5 +179,36 @@ name: imu
     acc_n: 0.0062514963677433935
     acc_w: 0.0003522325711286831
 
+
+
+2hrs
+type: IMU
+name: imu
+"Gyr (unit: rad/s)":
+  avg-axis:
+    gyr_n: 0.00069736788822923263
+    gyr_w: 1.8356555632638541e-05
+  x-axis:
+    gyr_n: 0.00065336305695158647
+    gyr_w: 1.9517043769104921e-05
+  y-axis:
+    gyr_n: 0.00068470957821832178
+    gyr_w: 1.9802943488989844e-05
+  z-axis:
+    gyr_n: 0.00075403102951778931
+    gyr_w: 1.574967963982085e-05
+"Acc (unit: m/s^2)":
+  avg-axis:
+    acc_n: 0.006055343242956643
+    acc_w: 0.00020022678501542998
+  x-axis:
+    acc_n: 0.0059668425890045075
+    acc_w: 0.00010033769249961657
+  y-axis:
+    acc_n: 0.0055357476556324716
+    acc_w: 0.00014608351950515819
+  z-axis:
+    acc_n: 0.0066634394842329525
+    acc_w: 0.00035425914304151515
 
 */
